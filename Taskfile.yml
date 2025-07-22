@@ -1,0 +1,8 @@
+version: "3"
+
+tasks:
+  runserver:
+    description: Run the FastAPI server
+    usage: "task run"
+    cmds:
+      - source .venv/bin/activate && MONGO_URL="mongodb://0.0.0.0:27017" python3.13 fastapi/src/server.py
