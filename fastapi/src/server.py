@@ -1,4 +1,4 @@
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Depends
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from datetime import datetime
 from fastapi.responses import JSONResponse
@@ -9,9 +9,6 @@ import uvicorn
 from pymongo import MongoClient
 import os
 
-# ------------------------
-# FastAPI App
-# ------------------------
 app = FastAPI()
 
 app.add_middleware(
@@ -27,12 +24,20 @@ MONGO_URL = os.getenv("MONGO_URL", "mongodb://localhost:27017")
 client = MongoClient(MONGO_URL)
 db = client["logforge"]
 
+API_PASSWORD = os.getenv("API_PASSWORD", "defaultpassword")
+
+def authenticate(password: str = Depends(lambda: os.getenv("API_PASSWORD", "defaultpassword"))):
+    def dependency(x_password: str = Depends(lambda: os.getenv("API_PASSWORD", "defaultpassword"))):
+        if x_password != password:
+            raise HTTPException(status_code=401, detail="Invalid password")
+        return x_password
+    return dependency
+
 def get_db():
     return db
 
-# Log receiver endpoint
 @app.post("/logs", response_model=LogResponse)
-async def receive_log(log: LogCreate, db=Depends(get_db)):
+async def receive_log(log: LogCreate, db=Depends(get_db), _: str = Depends(authenticate)):
     print(f"Received log: {log.dict()}")
     log_data = log.dict()
     log_data["created_at"] = datetime.utcnow()
@@ -40,18 +45,17 @@ async def receive_log(log: LogCreate, db=Depends(get_db)):
     log_data["id"] = str(result.inserted_id)
     print(f"Saved log to database with ID: {log_data['id']}")
 
-    # Prepare response and broadcast
     response = LogResponse(**log_data)
     await manager.broadcast(response.dict())
     return response
 
 @app.websocket("/ws")
-async def websocket_endpoint(websocket: WebSocket):
+async def websocket_endpoint(websocket: WebSocket, _: str = Depends(authenticate)):
     await manager.connect(websocket)
-    websocket.filters = {}  # Store filters for this connection
+    websocket.filters = {}
     try:
         while True:
-            data = await websocket.receive_json()  # Expect JSON messages for filters
+            data = await websocket.receive_json()
             if "filters" in data:
                 websocket.filters = data["filters"]
                 print(f"Updated filters for connection: {websocket.filters}")
@@ -64,9 +68,8 @@ async def websocket_endpoint(websocket: WebSocket):
         manager.disconnect(websocket)
         print(f"WebSocket error: {e}")
 
-# Endpoint to retrieve all possible filters
 @app.get("/filters")
-async def get_filters(db=Depends(get_db)):
+async def get_filters(db=Depends(get_db), _: str = Depends(authenticate)):
     try:
         levels = db.logs.distinct("level")
         services = db.logs.distinct("service")

@@ -13,7 +13,6 @@ const Filters = ({ availableFilters, filters, onFilterChange }) => {
             onChange={onFilterChange}
             value={filters.level || ""}
           >
-            <option value="" disabled>Select Log Level</option>
             {availableFilters.levels.map((level) => (
               <option key={level} value={level}>{level}</option>
             ))}
@@ -27,7 +26,6 @@ const Filters = ({ availableFilters, filters, onFilterChange }) => {
             onChange={onFilterChange}
             value={filters.service || ""}
           >
-            <option value="" disabled>Select Service</option>
             {availableFilters.services.map((service) => (
               <option key={service} value={service}>{service}</option>
             ))}
@@ -41,7 +39,6 @@ const Filters = ({ availableFilters, filters, onFilterChange }) => {
             onChange={onFilterChange}
             value={filters.logger || ""}
           >
-            <option value="" disabled>Select Logger</option>
             {availableFilters.loggers.map((logger) => (
               <option key={logger} value={logger}>{logger}</option>
             ))}
