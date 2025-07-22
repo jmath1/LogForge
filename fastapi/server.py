@@ -1,103 +1,16 @@
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Depends
 from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy import Column, Integer, String, Float, DateTime, create_engine
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
-from pydantic import BaseModel
-from datetime import datetime
+
 from collections import deque
-import asyncio
 import uvicorn
 import os
-import json
 from fastapi.responses import JSONResponse
 
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./logs.db")
-
-Base = declarative_base()
-engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
-# ------------------------
-# DB Model
-# ------------------------
-class Log(Base):
-    __tablename__ = "logs"
-
-    id = Column(Integer, primary_key=True, index=True)
-    message = Column(String)
-    level = Column(String)
-    logger = Column(String)
-    timestamp = Column(Float)
-    pathname = Column(String)
-    lineno = Column(Integer)
-    service = Column(String)
-    user = Column(String, nullable=True)
-    request_method = Column(String, nullable=True)
-    request_url = Column(String, nullable=True)
-    request_headers = Column(String, nullable=True)
-    request_body = Column(String, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
-
-# ------------------------
-# Pydantic Schemas
-# ------------------------
-class Request(BaseModel):
-    method: str
-    url: str
-    headers: dict
-    body: str | None = None
-
-class LogCreate(BaseModel):
-    message: str
-    service: str
-    level: str
-    logger: str
-    timestamp: float
-    pathname: str
-    lineno: int
-    user: str | None = None
-    request: Request | None = None
-
-class LogResponse(LogCreate):
-    id: int
-
-# ------------------------
-# WebSocket Manager
-# ------------------------
-class ConnectionManager:
-    def __init__(self):
-        self.active_connections: list[WebSocket] = []
-        self.recent_logs: deque = deque(maxlen=10)  # Store last 10 logs
-
-    async def connect(self, websocket: WebSocket):
-        await websocket.accept()
-        self.active_connections.append(websocket)
-        print(f"New WebSocket connection. Total connections: {len(self.active_connections)}")
-        # Send recent logs to new client
-        for log in self.recent_logs:
-            try:
-                await websocket.send_json(log)
-                print(f"Sent recent log to new connection: {log}")
-            except Exception as e:
-                print(f"Failed to send recent log: {e}")
-
-    def disconnect(self, websocket: WebSocket):
-        if websocket in self.active_connections:
-            self.active_connections.remove(websocket)
-            print(f"WebSocket disconnected. Total connections: {len(self.active_connections)}")
-
-    async def broadcast(self, message: dict):
-        print(f"Broadcasting log to {len(self.active_connections)} connections: {message}")
-        self.recent_logs.append(message)  # Store log
-        for connection in self.active_connections[:]:
-            try:
-                await connection.send_json(message)
-            except Exception as e:
-                print(f"Failed to send to connection: {e}")
-                self.disconnect(connection)
-
-manager = ConnectionManager()
+from models import Log, LogCreate, LogResponse
+from database import get_db, DATABASE_URL, Base, engine
+from websocket import manager
 
 # ------------------------
 # FastAPI App
@@ -114,13 +27,6 @@ app.add_middleware(
 
 Base.metadata.create_all(bind=engine)
 
-# Dependency
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
 
 # Log receiver endpoint
 @app.post("/logs", response_model=LogResponse)
