@@ -1,13 +1,13 @@
-### Test POST /logs endpoint
+### Test POST /logs endpoint with info
 POST http://127.0.0.1:8000/logs
 Content-Type: application/json
 
 {
   "message": "Test log message",
   "service": "TestService",
-  "level": "ERROR",
+  "level": "INFO",
   "logger": "TestLogger",
-  "timestamp": 1625247600.0,
+  "timestamp": 1625247600,
   "pathname": "/path/to/file.py",
   "lineno": 42,
   "user": "test_user",
@@ -19,6 +19,34 @@ Content-Type: application/json
       "User-Agent": "TestAgent"
     },
     "body": "Test request body"
+  }
+}
+
+### Test WebSocket /ws endpoint
+GET ws://localhost:8000/ws
+
+
+### Test POST /logs endpoint with error
+POST http://127.0.0.1:8000/logs
+Content-Type: application/json
+
+{
+  "message": "Test log message",
+  "service": "TestService",
+  "level": "ERROR",
+  "logger": "TestLogger",
+  "timestamp": 1625247600,
+  "pathname": "/path/to/file.py",
+  "lineno": 42,
+  "user": "test_user",
+
+  "request": {
+    "method": "GET",
+    "url": "http://example.com",
+    "headers": {
+      "User-Agent": "TestAgent"
+    },
+    "body": "Test request body with error message"
   }
 }
 
