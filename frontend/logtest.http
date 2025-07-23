@@ -7,7 +7,6 @@ Content-Type: application/json
   "service": "TestService",
   "level": "INFO",
   "logger": "TestLogger",
-  "timestamp": 1625247600,
   "pathname": "/path/to/file.py",
   "lineno": 42,
   "user": "test_user",
@@ -22,9 +21,6 @@ Content-Type: application/json
   }
 }
 
-### Test WebSocket /ws endpoint
-GET ws://localhost:8000/ws
-
 
 ### Test POST /logs endpoint with error
 POST http://127.0.0.1:8000/logs
@@ -35,7 +31,6 @@ Content-Type: application/json
   "service": "TestService",
   "level": "ERROR",
   "logger": "TestLogger",
-  "timestamp": 1625247600,
   "pathname": "/path/to/file.py",
   "lineno": 42,
   "user": "test_user",
