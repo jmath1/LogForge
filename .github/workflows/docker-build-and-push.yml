@@ -1,33 +1,54 @@
-name: Build and Push Docker Image
+name: Build FastAPI app and push to AWS ECR with versioning
 
 on:
   push:
     branches:
       - main
 
+permissions:
+  id-token: write
+  contents: read
+
 jobs:
-  build-and-push:
-    name: Build and Push Docker Image to ECR
+  build:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v3
-      - name: Authenticate to AWS via
-      - name: Log in to Amazon ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v1
+      - name: Checkout Repo
+        uses: actions/checkout@v2
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
-
-      - name: Build and Push Docker Image
-        uses: docker/build-push-action@v4
+      - name: Authenticate with AWS
+        uses: aws-actions/configure-aws-credentials@v2
         with:
-          context: ./fastapi
-          push: true
-          tags: ${{ secrets.ECR_REGISTRY }}/${{ secrets.ECR_REPOSITORY }}:latest
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_NUMBER }}:role/GitHubRunnerRole
+          aws-region: us-east-1
 
-      - name: Verify Image in ECR
+      - name: Get Git Commit Hash
+        id: git-info
+        run: echo "COMMIT_HASH=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+
+      - name: Build image
         run: |
-          aws ecr describe-images --repository-name ${{ secrets.ECR_REPOSITORY }} --region ${{ secrets.AWS_REGION }}
+          aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${{ secrets.ECR_URI }}
+          docker build --file _infrastructure/docker/Dockerfile -t logging-server:${{ env.COMMIT_HASH }} -t logging-server:latest .
+      - name: Push image to ECR
+        run: |
+          docker tag logging-server:${{ env.COMMIT_HASH }} ${{ secrets.ECR_URI }}:${{ env.COMMIT_HASH }}
+          docker tag logging-server:latest ${{ secrets.ECR_URI }}:latest
+          docker push ${{ secrets.ECR_URI }}:${{ env.COMMIT_HASH }}
+          docker push ${{ secrets.ECR_URI }}:latest
+  # deploy:
+  #   needs: build
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: SSH into EC2 instance, pull latest image, and rebuild docker container with latest image
+  #       uses: appleboy/ssh-action@master
+  #       with:
+  #         host: ${{ secrets.PUBLIC_IP }}
+  #         username: ubuntu
+  #         key: ${{ secrets.SSH_PK }}
+  #         script: |
+  #           aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${{ secrets.ECR_URI }}
+  #           docker pull ${{ secrets.ECR_URI }}:latest
+  #           docker rm logging_server --force || true
+  #           docker run -d --network host --name logging_server -e CLOUD=True ${{ secrets.ECR_URI }}:latest
