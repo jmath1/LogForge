@@ -1,17 +1,25 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import axios from 'axios';
 import Filters from './Filters';
+import LogList from './LogList';
+import AttributeSelector from './AttributeSelector';
+import StatusIndicator from './StatusIndicator';
 
 const LiveLogViewer = () => {
-  const [logs, setLogs] = useState([]); // All received logs
-  const [filteredLogs, setFilteredLogs] = useState([]); // Filtered subset of logs
+  const [logs, setLogs] = useState([]);
+  const [filteredLogs, setFilteredLogs] = useState([]);
   const [error, setError] = useState(null);
   const [isConnected, setIsConnected] = useState(false);
   const [filters, setFilters] = useState({ level: "All", service: "All", logger: "All" }); // Default to "All"
   const [availableFilters, setAvailableFilters] = useState({ levels: [], services: [], loggers: [] });
+  const [visibleAttributes, setVisibleAttributes] = useState([
+    "level",
+    "logger",
+    "message",
+    "timestamp",
+  ]);
   const wsRef = useRef(null);
 
-  // Fetch available filters from the server
   useEffect(() => {
     const fetchFilters = async () => {
       try {
@@ -29,7 +37,6 @@ const LiveLogViewer = () => {
     fetchFilters();
   }, []);
 
-  // Initialize WebSocket only once
   useEffect(() => {
     const ws = new WebSocket("ws://localhost:8000/ws");
     wsRef.current = ws;
@@ -38,7 +45,6 @@ const LiveLogViewer = () => {
       console.log("WebSocket connection established");
       setIsConnected(true);
       setError(null);
-      // Send initial filters to the server
       sendFilters();
     };
 
@@ -71,9 +77,9 @@ const LiveLogViewer = () => {
         console.log("WebSocket cleanup triggered");
       }
     };
-  }, []); // Empty dependency array for one-time setup
+  }, []);
 
-  // Filter logs based on current filters
+  
   const applyFilters = useCallback((logsToFilter) => {
     return logsToFilter.filter((log) => {
       const levelMatch = filters.level === "All" || log.level === filters.level;
@@ -108,43 +114,32 @@ const LiveLogViewer = () => {
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
     setFilters((prev) => ({ ...prev, [name]: value }));
-
-    // Send updated filters to the WebSocket server
     sendFilters();
+  };
+
+  const toggleAttributeVisibility = (attribute) => {
+    setVisibleAttributes((prev) =>
+      prev.includes(attribute)
+        ? prev.filter((attr) => attr !== attribute)
+        : [...prev, attribute]
+    );
   };
 
   return (
     <div className="p-6 bg-gray-100 min-h-screen">
       <h2 className="text-2xl font-bold mb-4 text-gray-800">Live Logs</h2>
-      <div className={`mb-4 p-2 rounded ${isConnected ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}`}>
-        Status: {isConnected ? "Connected" : "Disconnected"}
-      </div>
-      {error && <div className="mb-4 text-red-500 font-semibold">{error}</div>}
-
-      {/* Filters Section with Feedback */}
+      <StatusIndicator isConnected={isConnected} error={error} />
       <Filters
         availableFilters={availableFilters}
         filters={filters}
         onFilterChange={handleFilterChange}
       />
-      <div className="mb-4 text-sm text-gray-600">
-        Active Filters: {Object.entries(getActiveFilters()).length > 0
-          ? Object.entries(getActiveFilters()).map(([key, value]) => `${key}: ${value}`).join(", ")
-          : "None"}
-      </div>
-
-      {/* Logs Section */}
-      <div className="bg-white shadow rounded p-4 max-h-96 overflow-y-auto">
-        <ul className="space-y-2">
-          {filteredLogs.map((log, idx) => (
-            <li key={idx} className="bg-gray-50 p-2 rounded shadow-sm">
-              <code className="text-sm text-gray-700">
-                [{log.level}] {log.logger}: {log.message} (Time: {new Date(log.created_at * 1000).toLocaleString()})
-              </code>
-            </li>
-          ))}
-        </ul>
-      </div>
+      <AttributeSelector
+        logs={logs}
+        visibleAttributes={visibleAttributes}
+        toggleAttributeVisibility={toggleAttributeVisibility}
+      />
+      <LogList logs={filteredLogs} visibleAttributes={visibleAttributes} />
     </div>
   );
 };
