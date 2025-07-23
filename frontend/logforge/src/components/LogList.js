@@ -12,21 +12,32 @@ const LogList = ({ logs, visibleAttributes }) => {
   }, []);
 
   return (
-    <div className="bg-gray-200 shadow rounded p-4 max-h-96 overflow-y-auto">
-      <ul className="space-y-2">
-        {logs.length > 0 ? (
-          logs.map((log, idx) => (
-            <LogRecord
-              key={idx}
-              log={log}
-              visibleAttributes={visibleAttributes}
-              currentTime={currentTime}
-            />
-          ))
-        ) : (
-          <li className="p-2 text-gray-500">No logs available</li>
-        )}
-      </ul>
+    <div className="bg-white shadow rounded p-4 max-h-96 overflow-y-auto">
+      {logs.length > 0 ? (
+        <table className="table-auto w-full text-left border-collapse">
+          <thead>
+            <tr className="bg-gray-100">
+              {visibleAttributes.map((attr) => (
+                <th key={attr} className="p-2 text-sm font-semibold text-gray-700 border-b">
+                  {attr}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {logs.map((log) => (
+              <LogRecord
+                key={log.id}
+                log={log}
+                visibleAttributes={visibleAttributes}
+                currentTime={currentTime}
+              />
+            ))}
+          </tbody>
+        </table>
+      ) : (
+        <div className="p-2 text-gray-500">No logs available</div>
+      )}
     </div>
   );
 };

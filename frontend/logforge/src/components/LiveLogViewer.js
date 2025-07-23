@@ -13,6 +13,7 @@ const LiveLogViewer = () => {
   const [filters, setFilters] = useState({ level: "All", service: "All", logger: "All" }); // Default to "All"
   const [availableFilters, setAvailableFilters] = useState({ levels: [], services: [], loggers: [] });
   const [visibleAttributes, setVisibleAttributes] = useState([
+    "id",
     "level",
     "logger",
     "message",
@@ -38,6 +39,26 @@ const LiveLogViewer = () => {
   }, []);
 
   useEffect(() => {
+    const fetchPreviousLogs = async () => {
+      try {
+        const response = await axios.get("http://localhost:8000/logs"); // Fetch logs from the database
+        setLogs((prev) => {
+          const uniqueLogs = [...prev, ...response.data].reduce((acc, log) => {
+            acc[log.id] = log; // Use `id` as the unique key
+            return acc;
+          }, {});
+          return Object.values(uniqueLogs); // Return unique logs
+        });
+      } catch (err) {
+        console.error("Error fetching previous logs:", err);
+        setError("Failed to fetch previous logs");
+      }
+    };
+
+    fetchPreviousLogs();
+  }, []); // Fetch previous logs on component mount
+
+  useEffect(() => {
     const ws = new WebSocket("ws://localhost:8000/ws");
     wsRef.current = ws;
 
@@ -52,7 +73,13 @@ const LiveLogViewer = () => {
       try {
         const log = JSON.parse(event.data);
         console.log("Received log:", log);
-        setLogs((prev) => [log, ...prev].slice(0, 100)); // Limit to 100 logs
+        setLogs((prev) => {
+          const uniqueLogs = [log, ...prev].reduce((acc, log) => {
+            acc[log.id] = log; // Use `id` as the unique key
+            return acc;
+          }, {});
+          return Object.values(uniqueLogs); // Return unique logs
+        });
       } catch (err) {
         console.error("Error parsing WebSocket message:", err, "Data:", event.data);
         setError("Failed to parse log data");
@@ -127,7 +154,7 @@ const LiveLogViewer = () => {
 
   return (
     <div className="p-6 bg-gray-100 min-h-screen">
-      <h2 className="text-2xl font-bold mb-4 text-gray-800">Live Logs</h2>
+      <h2 className="text-2xl font-bold mb-4 text-gray-800">Live View</h2>
       <StatusIndicator isConnected={isConnected} error={error} />
       <Filters
         availableFilters={availableFilters}

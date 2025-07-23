@@ -85,5 +85,17 @@ async def get_filters(db=Depends(get_db), _: str = Depends(authenticate)):
         print(f"Error retrieving filters: {e}")
         return JSONResponse(content={"error": "Failed to retrieve filters"}, status_code=500)
 
+@app.get("/logs")
+async def get_previous_logs(db=Depends(get_db), _: str = Depends(authenticate)):
+    try:
+        logs = list(db.logs.find().sort("timestamp", -1).limit(100))  # Fetch the latest 100 logs
+        for log in logs:
+            log["id"] = str(log["_id"])  # Convert ObjectId to string and use as `id`
+            del log["_id"]  # Remove the MongoDB-specific field
+        return logs
+    except Exception as e:
+        print(f"Error fetching logs: {e}")
+        raise HTTPException(status_code=500, detail="Failed to fetch logs")
+
 if __name__ == "__main__":
     uvicorn.run("server:app", host="127.0.0.1", port=8000, reload=True)
