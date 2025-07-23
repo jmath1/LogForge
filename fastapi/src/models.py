@@ -16,11 +16,17 @@ class LogCreate(BaseModel):
     service: str
     level: str
     logger: str
-    timestamp: float
+    timestamp: float | None = None
     pathname: str
     lineno: int
     user: str | None = None
     request: Request | None = None
+    
+    def __init__(self, **data):
+            # Set default timestamp if not provided
+            if 'timestamp' not in data or data['timestamp'] is None:
+                data['timestamp'] = datetime.now().timestamp()
+            super().__init__(**data)
 
 class LogResponse(LogCreate):
     id: str
