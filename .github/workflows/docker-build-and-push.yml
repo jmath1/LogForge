@@ -30,7 +30,7 @@ jobs:
       - name: Build image
         run: |
           aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${{ secrets.ECR_URI }}
-          docker build --file _infrastructure/docker/Dockerfile -t logging-server:${{ env.COMMIT_HASH }} -t logging-server:latest .
+          docker build --file fastapi/Dockerfile -t logging-server:${{ env.COMMIT_HASH }} -t logging-server:latest .
       - name: Push image to ECR
         run: |
           docker tag logging-server:${{ env.COMMIT_HASH }} ${{ secrets.ECR_URI }}:${{ env.COMMIT_HASH }}
