@@ -12,7 +12,7 @@ const Filters = ({ availableFilters, filters, onFilterChange }) => {
       <CollapsibleSection title="Filters" isCollapsed={isCollapsed} onToggle={toggleCollapse}>
         <div className="grid grid-cols-3 gap-4 mt-4">
           <div>
-            <label className="block text-sm font-medium text-gray-100 mb-1">Log Level</label>
+            <label className="block text-sm font-medium text-gray-800 mb-1">Log Level</label>
             <select
               name="level"
               className="p-2 border rounded w-full text-gray-800"
@@ -25,7 +25,7 @@ const Filters = ({ availableFilters, filters, onFilterChange }) => {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-100 mb-1">Service</label>
+            <label className="block text-sm font-medium text-gray-800 mb-1">Service</label>
             <select
               name="service"
               className="p-2 border rounded w-full text-gray-800"
@@ -38,7 +38,7 @@ const Filters = ({ availableFilters, filters, onFilterChange }) => {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-100 mb-1">Logger</label>
+            <label className="block text-sm font-medium text-gray-800 mb-1">Logger</label>
             <select
               name="logger"
               className="p-2 border rounded w-full text-gray-800"
