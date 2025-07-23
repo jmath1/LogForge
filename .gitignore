@@ -13,3 +13,6 @@ __pycache__/
 *.env
 *.DS_Store
 *.vscode/
+inventory.ini
+.terraform/
+.terraform.lock.hcl

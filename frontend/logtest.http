@@ -4,7 +4,7 @@ Content-Type: application/json
 
 {
   "message": "Test log message",
-  "service": "TestService",
+  "service": "TestService2",
   "level": "INFO",
   "logger": "TestLogger",
   "pathname": "/path/to/file.py",
@@ -28,7 +28,7 @@ Content-Type: application/json
 
 {
   "message": "Test log message",
-  "service": "TestService",
+  "service": "TestService2",
   "level": "ERROR",
   "logger": "TestLogger",
   "pathname": "/path/to/file.py",
