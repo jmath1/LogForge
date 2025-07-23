@@ -40,7 +40,7 @@ def get_db():
 async def receive_log(log: LogCreate, db=Depends(get_db), _: str = Depends(authenticate)):
     print(f"Received log: {log.dict()}")
     log_data = log.dict()
-    log_data["created_at"] = datetime.utcnow()
+    log_data["timestamp"] = datetime.now().timestamp() if not log_data.get("timestamp") else log_data["timestamp"]
     result = db.logs.insert_one(log_data)
     log_data["id"] = str(result.inserted_id)
     print(f"Saved log to database with ID: {log_data['id']}")
