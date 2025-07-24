@@ -1,0 +1,46 @@
+---
+- name: Pull Fluentd Docker image
+  docker_image:
+    name: fluent/fluentd
+    tag: latest
+    source: pull
+
+- name: Create Fluentd configuration file
+  copy:
+    dest: /etc/fluentd.conf
+    content: |
+      <source>
+        @type forward
+        port 24224
+      </source>
+
+      <source>
+        @type docker
+        path /var/lib/docker/containers
+        pos_file /var/log/fluentd-docker.pos
+        tag docker.*
+      </source>
+
+      <match docker.**>
+        @type http
+        endpoint "#{ENV['LOGFORGE_SERVER_URL']}"
+        http_method post
+        serializer json
+        <buffer>
+          flush_interval 5s
+        </buffer>
+      </match>
+
+- name: Run Fluentd container as a sidecar
+  docker_container:
+    name: logging-sidecar
+    image: fluent/fluentd
+    state: started
+    restart_policy: always
+    ports:
+      - "24224:24224"
+    volumes:
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /etc/fluentd.conf:/fluentd/etc/fluent.conf:ro
+    env:
+      LOGFORGE_SERVER_URL: "{{ logforge_server_url }}"

@@ -1,0 +1,20 @@
+---
+
+- name: debug
+  debug:
+    msg: "Using ECR registry: {{ ecr_registry }}"
+- name: Pull the FastAPI Docker image
+  docker_image:
+    name: "{{ ecr_registry }}/logforge"
+    tag: latest
+    source: pull
+- name: Run the FastAPI container
+  docker_container:
+    name: logforge-fastapi
+    image: "{{ ecr_registry }}/logforge:latest"
+    state: started
+    restart_policy: always
+    ports:
+      - "8000:8000"
+    env:
+      MONGO_URL: "mongodb://mongo:27017"

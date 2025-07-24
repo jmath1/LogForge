@@ -1,0 +1,8 @@
+---
+- name: Deploy Logging Sidecar
+  hosts: portfolio
+  become: true
+  vars:
+    logforge_server_url: "{{ lookup('env', 'LOGFORGE_SERVER_URL') | default('http://127.0.0.1:8000/logs', true) }}"
+  roles:
+    - role: logging_sidecar

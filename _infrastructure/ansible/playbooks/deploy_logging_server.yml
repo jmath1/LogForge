@@ -1,0 +1,10 @@
+---
+- name: Deploy Logging Server
+  hosts: logging_server
+  become: yes
+  vars:
+    logforge_server_url: "{{ lookup('env', 'LOGFORGE_SERVER_URL') }}"
+    ecr_registry: "{{ lookup('env', 'TF_VAR_ecr_registry') }}"
+  roles:
+    - docker
+    - logging_server
