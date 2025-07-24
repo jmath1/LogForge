@@ -100,7 +100,7 @@ resource "aws_iam_role_policy_attachment" "github_policy_attach" {
 }
 
 resource "aws_iam_role_policy_attachment" "ec2_policy_attach" {
-  role       = local.ec2_role_name
+  role       = aws_iam_role.logging_server_role.name
   policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryFullAccess"
 }
 

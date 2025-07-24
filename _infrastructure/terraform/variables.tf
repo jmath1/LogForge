@@ -1,7 +1,7 @@
 variable "ssh_key_path" {
   description = "Path to the SSH private key used for connecting to the EC2 instances."
   type        = string
-  default     = "~/.ssh/github_id_rsa"
+  default     = "./keys/logging-server-key.pem"
 }
 
 variable "github_thumbprint" {
