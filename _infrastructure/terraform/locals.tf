@@ -1,3 +1,4 @@
 locals {
-  ssh_key_name = "github_id_rsa"
+  sidecar_destination_ip = data.terraform_remote_state.web.outputs.ec2_public_ip
+  ec2_role_name = data.terraform_remote_state.web.outputs.ec2_role_name
 }
