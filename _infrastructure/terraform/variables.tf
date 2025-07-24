@@ -46,3 +46,21 @@ variable "aws_account_number" {
   description = "AWS account number"
   type        = string
 }
+
+variable "domain_name" {
+  description = "Domain name for the CloudFront distribution"
+  type        = string
+  default     = "jonathanmath"
+}
+
+variable "tld" {
+  description = "Top-level domain for the CloudFront distribution"
+  type        = string
+  default     = "com"
+}
+
+variable "cloudfront_price_class" {
+  description = "Price class for the CloudFront distribution"
+  type        = string
+  default     = "PriceClass_100" # Options: PriceClass_All, PriceClass_200, PriceClass_100
+}
