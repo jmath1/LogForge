@@ -7,6 +7,12 @@ tasks:
     cmds:
       - source .venv/bin/activate && MONGO_URL="mongodb://0.0.0.0:27017" python3.13 fastapi/src/server.py
 
+  push:
+    description: Build and push the docker image for backend
+    usage: "task push"
+    cmds:
+      - docker build -t 471528030347.dkr.ecr.us-east-1.amazonaws.com/logforge:latest ./fastapi
+      - docker push 471528030347.dkr.ecr.us-east-1.amazonaws.com/logforge:latest
   tf_init:
     description: Init an infrastructure stack. Do not use on the organization stack.
     usage: "task tf_init"
@@ -44,7 +50,7 @@ tasks:
     usage: "task ssk_ec2 -- registry"
     cmds:
       - ec2_public_ip=$(terraform -chdir=_infrastructure/terraform/stacks/web output -raw ec2_public_ip);
-        ssh -i ./_infrastructure/terraform/stacks/web/github_id_rsa ubuntu@${ec2_public_ip}
+        ssh ubuntu@${ec2_public_ip}
 
   apb:
     description: Run an ansible playbook
@@ -52,3 +58,16 @@ tasks:
     cmds:
       - playbook=$(echo {{ .CLI_ARGS }} | cut -d " " -f1);
         ansible-playbook -i inventory.ini _infrastructure/ansible/playbooks/${playbook}.yml
+
+  deploy_frontend:
+    description: Deploy the frontend
+    usage: "task deploy_frontend"
+    cmds:
+      - ansible-playbook -i inventory.ini _infrastructure/ansible/playbooks/deploy_frontend.yml
+
+  deploy_logging_sidecar:
+    description: Deploy the logging sidecar
+    usage: "task deploy_logging_sidecar"
+    cmds:
+      - LOGFORGE_SERVER_URL=${terraform -}
+        LOGFORGE_SERVER_URL="http://logforge.example.com" ansible-playbook -i inventory.ini _infrastructure/ansible/playbooks/deploy_logging_sidecar.yml
