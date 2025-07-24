@@ -43,14 +43,14 @@ tasks:
     usage: "task tf_output -- registry"
     cmds:
       - output=$(echo {{ .CLI_ARGS }} | cut -d " " -f1);
-        echo $(terraform -chdir=_infrastructure/terraform/stacks/${stack} output)
+        echo $(terraform -chdir=_infrastructure/terraform/ output)
 
   ssh:
     description: SSH into an EC2 instance
     usage: "task ssk_ec2 -- registry"
     cmds:
-      - ec2_public_ip=$(terraform -chdir=_infrastructure/terraform/stacks/web output -raw ec2_public_ip);
-        ssh ubuntu@${ec2_public_ip}
+      - ec2_public_ip=$(terraform -chdir=_infrastructure/terraform/ output -raw logging_server_ip);
+        ssh -i ./keys/logging-server-key.pem ubuntu@${ec2_public_ip}
 
   apb:
     description: Run an ansible playbook
