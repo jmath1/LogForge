@@ -25,6 +25,12 @@ tasks:
     cmds:
       - terraform -chdir=_infrastructure/terraform/ apply
 
+  tf_destroy:
+    description: Destroy infrastructure
+    usage: "task tf_destroy"
+    cmds:
+      - terraform -chdir=_infrastructure/terraform/ destroy
+
   tf_console:
     description: Use the console
     usage: "task tf_console"

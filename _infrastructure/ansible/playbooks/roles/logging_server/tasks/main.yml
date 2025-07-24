@@ -1,13 +1,28 @@
 ---
+- name: Get repository url using aws cli
+  shell: aws ecr describe-repositories --repository-names logforge --region us-east-1 --query 'repositories[0].repositoryUri' --output text
+  register: ecr_repository
 
-- name: debug
-  debug:
-    msg: "Using ECR registry: {{ ecr_registry }}"
-- name: Pull the FastAPI Docker image
-  docker_image:
-    name: "{{ ecr_registry }}/logforge"
-    tag: latest
-    source: pull
+- name: Log into ECR registry"
+  shell: aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin {{ ecr_repository.stdout }}
+
+- name: Remove danging images
+  shell: docker image prune -f
+
+- name: Pull latest image from ECR
+  shell: docker pull {{ ecr_repository.stdout }}:latest
+
+- name: Set up mongo image and volume
+  docker_container:
+    name: mongo
+    image: mongo:6.0
+    state: started
+    restart_policy: always
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+
 - name: Run the FastAPI container
   docker_container:
     name: logforge-fastapi
