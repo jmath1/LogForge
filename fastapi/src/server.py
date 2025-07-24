@@ -20,8 +20,8 @@ app.add_middleware(
 )
 
 
-MONGO_URL = os.getenv("MONGO_URL", "mongodb://localhost:27017")
-client = MongoClient(MONGO_URL)
+MONGO_URL = os.getenv("MONGO_URL", "mongodb://0.0.0.0:27017")
+client = MongoClient(MONGO_URL, username=os.getenv("MONGO_INITDB_ROOT_USERNAME"), password=os.getenv("MONGO_INITDB_ROOT_PASSWORD"))
 db = client["logforge"]
 
 API_PASSWORD = os.getenv("API_PASSWORD", "defaultpassword")

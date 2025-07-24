@@ -10,7 +10,7 @@ const LiveLogViewer = () => {
   const [filteredLogs, setFilteredLogs] = useState([]);
   const [error, setError] = useState(null);
   const [isConnected, setIsConnected] = useState(false);
-  const [filters, setFilters] = useState({ level: "All", service: "All", logger: "All" }); // Default to "All"
+  const [filters, setFilters] = useState({ level: "All", service: "All", logger: "All" });
   const [availableFilters, setAvailableFilters] = useState({ levels: [], services: [], loggers: [] });
   const [visibleAttributes, setVisibleAttributes] = useState([
     "id",
@@ -24,7 +24,7 @@ const LiveLogViewer = () => {
   useEffect(() => {
     const fetchFilters = async () => {
       try {
-        const response = await axios.get("http://localhost:8000/filters");
+        const response = await axios.get(`https://${process.env.REACT_APP_BACKEND}/filters`);
         setAvailableFilters({
           levels: ["All", ...response.data.levels],
           services: ["All", ...response.data.services],
@@ -41,7 +41,7 @@ const LiveLogViewer = () => {
   useEffect(() => {
     const fetchPreviousLogs = async () => {
       try {
-        const response = await axios.get("http://localhost:8000/logs"); // Fetch logs from the database
+        const response = await axios.get(`https://${process.env.REACT_APP_BACKEND}/logs`);
         setLogs((prev) => {
           const uniqueLogs = [...prev, ...response.data].reduce((acc, log) => {
             acc[log.id] = log; // Use `id` as the unique key
@@ -56,10 +56,10 @@ const LiveLogViewer = () => {
     };
 
     fetchPreviousLogs();
-  }, []); // Fetch previous logs on component mount
+  }, []);
 
   useEffect(() => {
-    const ws = new WebSocket("ws://localhost:8000/ws");
+    const ws = new WebSocket(`wss://${process.env.REACT_APP_BACKEND}/ws`);
     wsRef.current = ws;
 
     ws.onopen = () => {

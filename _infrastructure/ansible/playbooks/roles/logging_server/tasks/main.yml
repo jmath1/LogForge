@@ -1,18 +1,9 @@
----
-- name: Get repository url using aws cli
-  shell: aws ecr describe-repositories --repository-names logforge --region us-east-1 --query 'repositories[0].repositoryUri' --output text
-  register: ecr_repository
+- name: Create a custom Docker network
+  docker_network:
+    name: logforge_network
+    state: present
 
-- name: Log into ECR registry"
-  shell: aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin {{ ecr_repository.stdout }}
-
-- name: Remove danging images
-  shell: docker image prune -f
-
-- name: Pull latest image from ECR
-  shell: docker pull {{ ecr_repository.stdout }}:latest
-
-- name: Set up mongo image and volume
+- name: Set up MongoDB container
   docker_container:
     name: mongo
     image: mongo:6.0
@@ -20,8 +11,13 @@
     restart_policy: always
     ports:
       - "27017:27017"
+    networks:
+      - name: logforge_network
     volumes:
       - mongo_data:/data/db
+    env:
+      MONGO_INITDB_ROOT_USERNAME: "{{ lookup('env', 'MONGO_INITDB_ROOT_USERNAME') }}"
+      MONGO_INITDB_ROOT_PASSWORD: "{{ lookup('env', 'MONGO_INITDB_ROOT_PASSWORD') }}"
 
 - name: Run the FastAPI container
   docker_container:
@@ -31,5 +27,9 @@
     restart_policy: always
     ports:
       - "8000:8000"
+    networks:
+      - name: logforge_network
     env:
       MONGO_URL: "mongodb://mongo:27017"
+      MONGO_INITDB_ROOT_USERNAME: "{{ lookup('env', 'MONGO_INITDB_ROOT_USERNAME') }}"
+      MONGO_INITDB_ROOT_PASSWORD: "{{ lookup('env', 'MONGO_INITDB_ROOT_PASSWORD') }}"
