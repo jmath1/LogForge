@@ -16,3 +16,4 @@ __pycache__/
 inventory.ini
 .terraform/
 .terraform.lock.hcl
+keys/
