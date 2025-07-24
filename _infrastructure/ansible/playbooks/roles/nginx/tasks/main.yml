@@ -1,0 +1,80 @@
+---
+- name: Ensure required nginx package is installed
+  apt:
+    name:
+      - nginx
+    state: present
+    update_cache: yes
+- name: Ensure certbot packages are installed
+  apt:
+    name:
+      - certbot
+      - python3-certbot-nginx
+    state: present
+    update_cache: yes
+- name: Obtain SSL Certificate
+  command: >
+    certbot certonly --nginx --non-interactive --agree-tos
+    -m {{ email }} -d {{ domain_name }}
+  register: certbot_result
+  changed_when: "'Congratulations' in certbot_result.stdout"
+
+- name: Create nginx configuration
+  copy:
+    dest: /etc/nginx/sites-available/logforge
+    content: |
+      server {
+          listen 443 ssl;
+
+          server_name {{ domain_name }};
+          
+          ssl_certificate /etc/letsencrypt/live/{{ domain_name }}/fullchain.pem;
+          ssl_certificate_key /etc/letsencrypt/live/{{ domain_name }}/privkey.pem;
+
+
+          client_max_body_size 2M;
+
+          location / {
+              proxy_pass http://0.0.0.0:8000;
+              proxy_set_header Host $host;
+              proxy_set_header X-Real-IP $remote_addr;
+              proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+              proxy_set_header X-Forwarded-Proto $scheme;
+          }
+      }
+
+- name: Enable site and reload nginx
+  shell: |
+    ln -sf /etc/nginx/sites-available/logforge /etc/nginx/sites-enabled/logforge
+    rm -f /etc/nginx/sites-enabled/default || true
+    nginx -t
+    systemctl reload nginx
+
+- name: Setup auto-renewal cron
+  cron:
+    name: "Auto-renew Let's Encrypt certificates"
+    job: |
+      ufw allow 80/tcp && certbot renew --quiet && systemctl reload nginx && ufw deny 80/tcp
+    minute: 0
+    hour: 0
+
+- name: Turn on UFW
+  ufw:
+    state: enabled
+    policy: deny
+- name: Enable UFW for SSH
+  ufw:
+    rule: allow
+    port: 22
+    proto: tcp
+- name: Enable UFW for HTTPS
+  ufw:
+    rule: allow
+    port: 443
+    proto: tcp
+- name: Deny HTTP (port 80) explicitly
+  ufw:
+    rule: deny
+    port: 80
+    proto: tcp
+  notify: Reload UFW

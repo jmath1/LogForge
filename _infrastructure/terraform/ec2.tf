@@ -26,7 +26,7 @@ resource "aws_instance" "logging_server" {
   EOF
 
   tags = {
-    Name = "portfolio-server"
+    Name = "logging-server"
   }
 }
 
