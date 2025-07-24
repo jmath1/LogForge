@@ -47,3 +47,56 @@ Content-Type: application/json
 
 ### Test WebSocket /filters endpoint
 GET http://127.0.0.1:8000/filters
+
+
+
+
+
+
+### Send a fake log to the logging server
+POST https://logs-api.jonathanmath.com/logs
+Content-Type: application/json
+x-password: defaultpassword
+
+{
+  "message": "Test log message",
+  "service": "TestService2",
+  "level": "ERROR",
+  "logger": "TestLogger",
+  "pathname": "/path/to/file.py",
+  "lineno": 42,
+  "user": "test_user",
+
+  "request": {
+    "method": "GET",
+    "url": "http://example.com",
+    "headers": {
+      "User-Agent": "TestAgent"
+    },
+    "body": "Test request body with error message"
+  }
+}
+
+### Example with a different log level
+POST https://logs-api.jonathanmath.com/logs
+Content-Type: application/json
+x-password: defaultpassword
+
+{
+  "message": "Test log message",
+  "service": "TestService2",
+  "level": "INFO",
+  "logger": "TestLogger",
+  "pathname": "/path/to/file.py",
+  "lineno": 42,
+  "user": "test_user",
+
+  "request": {
+    "method": "GET",
+    "url": "http://example.com",
+    "headers": {
+      "User-Agent": "TestAgent"
+    },
+    "body": "Test request body with error message"
+  }
+}
